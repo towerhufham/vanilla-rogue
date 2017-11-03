@@ -20,6 +20,7 @@ var Game = {
     display: null,
 	width: 50,
 	height: 30,
+	player: null,
     map: null,
     engine: null,
     entities: [],
@@ -32,6 +33,7 @@ var Game = {
         this.generateMap();
         
         var scheduler = new ROT.Scheduler.Simple();
+		scheduler.add(this.player, true);
 
         this.engine = new ROT.Engine(scheduler);
         this.engine.start();
@@ -53,18 +55,32 @@ var Game = {
         generator.create(callback.bind(this));
 		
 		this.addPotion(freeCells);
+		
+		//todo: this probably should be put somewhere else
+		this.createPlayer(freeCells);
     },
+	
+	createPlayer(freeCells) {
+		this.player = new Player({name:"Player", character:"@", fg:"#0f0"}); 
+		var coord = randomPop(freeCells);
+		this.player.setPosition(coord.x, coord.y);
+		this.entities.push(this.player);
+	},
+	
+	drawTile: function(x, y) {
+		if (this.map[x][y]) {
+			var t = this.map[x][y];
+			this.display.draw(x, y, t.character, t.fg, t.bg);
+		} else {
+			this.display.draw(x, y, " ", "#fff", "#000");
+		}
+	},
 	
 	drawMap: function() {
 		//draw tiles
 		for (var y = 0; y < this.height; y++) {
 			for (var x = 0; x < this.width; x++) {
-				if (this.map[x][y]) {
-					var t = this.map[x][y];
-					this.display.draw(x, y, t.character, t.fg, t.bg);
-				} else {
-					this.display.draw(x, y, " ", "#fff", "#000");
-				}
+				this.drawTile(x, y);
 			}
 		}
 		//draw entities
@@ -74,7 +90,7 @@ var Game = {
 	},
 	
 	addPotion: function(freeCells) {
-		var p = new Entity({name:"Cyan Potion", character:"?", fg:"#0ff"});
+		var p = new Item({name:"Cyan Potion", character:"?", fg:"#0ff"});
 		var coord = randomPop(freeCells);
 		p.setPosition(coord.x, coord.y);
 		this.entities.push(p);
@@ -116,6 +132,7 @@ class Entity {
 			this.bg = "#000";
 		}
 		
+		this.entity_type = "entity";
 		this.x = null;
 		this.y = null;
 	}
@@ -126,9 +143,69 @@ class Entity {
 	}
 	
 	draw() {
-		console.log("finna draw a " + this.name + " at " + this.x + "," + this.y);
+		//console.log("finna draw a " + this.name + " at " + this.x + "," + this.y);
 		if (this.x && this.y) {
 			Game.display.draw(this.x, this.y, this.character, this.fg, this.bg);
 		}
 	}
 }
+
+class Item extends Entity {
+	constructor(config) {
+		super(config);
+		this.entity_type = "item";
+	}
+}
+
+class Actor extends Entity {
+	constructor(config) {
+		super(config);
+		this.entity_type = "actor";
+	}
+}
+
+class Player extends Actor {
+	constructor(config) {
+		super(config);
+		this.entity_type = "player";
+	}
+	
+	act() {
+		Game.engine.lock();
+		window.addEventListener("keydown", this);
+	}
+	
+	handleEvent(e) {
+		var keyMap = {};
+		keyMap[38] = 0;
+		keyMap[33] = 1;
+		keyMap[39] = 2;
+		keyMap[34] = 3;
+		keyMap[40] = 4;
+		keyMap[35] = 5;
+		keyMap[37] = 6;
+		keyMap[36] = 7;
+
+		var code = e.keyCode;
+		/* one of numpad directions? */
+		if (!(code in keyMap)) { return; }
+
+		/* is there a free space? */
+		var dir = ROT.DIRS[8][keyMap[code]];
+		var newX = this.x + dir[0];
+		var newY = this.y + dir[1];
+		
+		//quit if there is no tile
+		if (!(Game.map[newX][newY])) {return;}
+		//quit if the tile is impassable
+		if (Game.map[newX][newY].passable) {return;}
+
+		Game.drawTile(this.x, this.y);
+		this.x = newX;
+		this.y = newY;
+		this.draw();
+		window.removeEventListener("keydown", this);
+		Game.engine.unlock();
+	}
+}
+		
