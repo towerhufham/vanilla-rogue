@@ -10,13 +10,19 @@ function createArray(length) { //this function by Matthew Crumley
     return arr;
 }
 
+function randomPop(arr) {
+	var index = Math.floor(ROT.RNG.getUniform() * arr.length);
+    var e = arr.splice(index, 1)[0];
+	return e;
+}
+
 var Game = {
     display: null,
 	width: 50,
 	height: 30,
     map: null,
     engine: null,
-    player: null,
+    entities: [],
     
     init: function() {
 	this.display = new ROT.Display({width:this.width, height:this.height, fontSize:32});
@@ -45,12 +51,14 @@ var Game = {
             freeCells.push({x:x, y:y});
         }
         generator.create(callback.bind(this));
+		
+		this.addPotion(freeCells);
     },
 	
 	drawMap: function() {
+		//draw tiles
 		for (var y = 0; y < this.height; y++) {
 			for (var x = 0; x < this.width; x++) {
-				//alert(this.map[x][y]);
 				if (this.map[x][y]) {
 					var t = this.map[x][y];
 					this.display.draw(x, y, t.character, t.fg, t.bg);
@@ -59,7 +67,18 @@ var Game = {
 				}
 			}
 		}
-	}
+		//draw entities
+		for (var i = 0; i < this.entities.length; i++) {
+			this.entities[i].draw();
+		}
+	},
+	
+	addPotion: function(freeCells) {
+		var p = new Entity({name:"Cyan Potion", character:"?", fg:"#0ff"});
+		var coord = randomPop(freeCells);
+		p.setPosition(coord.x, coord.y);
+		this.entities.push(p);
+	},
 }
     
 class Tile { 
@@ -95,6 +114,21 @@ class Entity {
 			this.bg = config.bg;
 		} else {
 			this.bg = "#000";
+		}
+		
+		this.x = null;
+		this.y = null;
+	}
+	
+	setPosition(x, y) {
+		this.x = x;
+		this.y = y;
+	}
+	
+	draw() {
+		console.log("finna draw a " + this.name + " at " + this.x + "," + this.y);
+		if (this.x && this.y) {
+			Game.display.draw(this.x, this.y, this.character, this.fg, this.bg);
 		}
 	}
 }
