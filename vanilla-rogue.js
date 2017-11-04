@@ -18,8 +18,8 @@ function randomPop(arr) {
 
 var Game = {
     display: null,
-	width: 50,
-	height: 30,
+	width: 70,
+	height: 25,
 	player: null,
     map: null,
     engine: null,
@@ -200,10 +200,9 @@ class Player extends Actor {
 		//quit if the tile is impassable
 		if (Game.map[newX][newY].passable) {return;}
 
-		Game.drawTile(this.x, this.y);
 		this.x = newX;
 		this.y = newY;
-		this.draw();
+		Game.drawMap()
 		window.removeEventListener("keydown", this);
 		Game.engine.unlock();
 	}
