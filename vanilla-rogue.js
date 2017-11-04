@@ -1,12 +1,10 @@
 function createArray(length) { //this function by Matthew Crumley
     var arr = new Array(length || 0),
         i = length;
-
     if (arguments.length > 1) {
         var args = Array.prototype.slice.call(arguments, 1);
         while(i--) arr[length-1 - i] = createArray.apply(this, args);
     }
-
     return arr;
 }
 
@@ -59,6 +57,17 @@ var Game = {
 		//todo: this probably should be put somewhere else
 		this.createPlayer(freeCells);
     },
+	
+	getEntitiesAt: function(x, y) {
+		found = []
+		for (var i = 0; i < this.entities.length ; i++) {
+			var ent = this.entities[i];
+			if (ent.x === x && ent.y === y) {
+				found.push(ent);
+			}
+		}
+		return found;
+	},
 	
 	createPlayer(freeCells) {
 		this.player = new Player({name:"Player", character:"@", fg:"#0f0"}); 
@@ -161,6 +170,22 @@ class Actor extends Entity {
 	constructor(config) {
 		super(config);
 		this.entity_type = "actor";
+		this.inventory = [];
+	}
+	
+	addToInventory(item) {
+		item.setPosition(null, null);
+		this.inventory.push(item);
+	}
+	
+	pickUp() {
+		var entitiesHere = Game.getEntitiesAt(this.x, this.y);
+		for (var i = 0; i < entitiesHere.length; i++) {
+			var e = entitiesHere[i];
+			if (e.entity_type == "item") {
+				this.addToInventory(e);
+			}
+		}
 	}
 }
 
@@ -187,6 +212,11 @@ class Player extends Actor {
 		keyMap[36] = 7;
 
 		var code = e.keyCode;
+		
+		if (code == 13 || code == 32) {
+			this.pickUp();
+		}
+		
 		/* one of numpad directions? */
 		if (!(code in keyMap)) { return; }
 
