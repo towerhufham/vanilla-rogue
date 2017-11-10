@@ -152,7 +152,6 @@ class Entity {
 	}
 	
 	draw() {
-		//console.log("finna draw a " + this.name + " at " + this.x + "," + this.y);
 		if (this.x && this.y) {
 			Game.display.draw(this.x, this.y, this.character, this.fg, this.bg);
 		}
@@ -201,40 +200,49 @@ class Player extends Actor {
 	}
 	
 	handleEvent(e) {
-		var keyMap = {};
-		keyMap[38] = 0;
-		keyMap[33] = 1;
-		keyMap[39] = 2;
-		keyMap[34] = 3;
-		keyMap[40] = 4;
-		keyMap[35] = 5;
-		keyMap[37] = 6;
-		keyMap[36] = 7;
-
-		var code = e.keyCode;
+		//console.log(e);
+		var movement = {};
 		
-		if (code == 13 || code == 32) {
+		movement["ArrowUp"] = {x:0, y:-1};
+		movement["ArrowLeft"] = {x:-1, y:0};
+		movement["ArrowRight"] = {x:1, y:0};
+		movement["ArrowDown"] = {x:0, y:1};
+		
+		movement["Numpad8"] = {x:0, y:-1};
+		movement["Numpad4"] = {x:-1, y:0};
+		movement["Numpad6"] = {x:1, y:0};
+		movement["Numpad2"] = {x:0, y:1};
+		
+		movement["Numpad7"] = {x:-1, y:-1};
+		movement["Numpad9"] = {x:1, y:-1};
+		movement["Numpad1"] = {x:-1, y:1};
+		movement["Numpad3"] = {x:1, y:1};
+		
+		var key = e.code;
+		var didAction = false;
+		
+		if (key in movement) {
+			var newX = this.x + movement[key].x;
+			var newY = this.y + movement[key].y;
+			
+			//quit if there is no tile
+			if (!(Game.map[newX][newY])) {return;}
+			//quit if the tile is impassable
+			if (Game.map[newX][newY].passable) {return;}
+			
+			didAction = true
+			this.x = newX;
+			this.y = newY;
+		}
+		else if (key === "Comma") {
 			this.pickUp();
+			didAction = true;
 		}
 		
-		/* one of numpad directions? */
-		if (!(code in keyMap)) { return; }
-
-		/* is there a free space? */
-		var dir = ROT.DIRS[8][keyMap[code]];
-		var newX = this.x + dir[0];
-		var newY = this.y + dir[1];
-		
-		//quit if there is no tile
-		if (!(Game.map[newX][newY])) {return;}
-		//quit if the tile is impassable
-		if (Game.map[newX][newY].passable) {return;}
-
-		this.x = newX;
-		this.y = newY;
-		Game.drawMap()
-		window.removeEventListener("keydown", this);
-		Game.engine.unlock();
+		if (didAction) {
+			Game.drawMap()
+			window.removeEventListener("keydown", this);
+			Game.engine.unlock();
+		}
 	}
 }
-		
