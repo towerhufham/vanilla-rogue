@@ -217,6 +217,7 @@ class Player extends Actor {
 		movement["Numpad9"] = {x:1, y:-1};
 		movement["Numpad1"] = {x:-1, y:1};
 		movement["Numpad3"] = {x:1, y:1};
+		movement["Numpad5"] = {x:0, y:0};
 		
 		var key = e.code;
 		var didAction = false;
