@@ -8,7 +8,11 @@ function createArray(length) { //this function is by Matthew Crumley
     return arr;
 }
 
-function randomPop(arr) {
+function randInt(min, max) {
+	return Math.floor(ROT.RNG.getUniform() * (max - min + 1)) + min;
+}
+
+function randomPop(arr) {  //TODO: make this use the rot.js random engine so it uses deterministic seeding
 	var index = Math.floor(ROT.RNG.getUniform() * arr.length);
     var e = arr.splice(index, 1)[0];
 	return e;
@@ -53,6 +57,7 @@ var Game = {
         generator.create(callback.bind(this));
 		
 		this.addPotion(freeCells);
+		this.addSnail(freeCells);
 		
 		//todo: this probably should be put somewhere else
 		this.createPlayer(freeCells);
@@ -104,6 +109,32 @@ var Game = {
 		p.setPosition(coord.x, coord.y);
 		this.entities.push(p);
 	},
+	
+	addSnail: function(freeCells) {
+		var ai = function() {
+			var x = randInt(-1,1);
+			var y = randInt(-1,1);
+			//console.log(x+","+y);
+			this.move(x,y);
+		};
+		var p = new Actor({name:"Snail", character:"s", fg:"#f4e4a4", ai:ai});
+		var coord = randomPop(freeCells);
+		p.setPosition(coord.x, coord.y);
+		this.entities.push(p);
+	},
+	
+	actorTurn: function() {
+		for (var i = 0; i < this.entities.length; i++) {
+			//console.log("looking at " + this.entities[i].name);
+			if (this.entities[i].entity_type === "actor") {
+				//console.log("is actor");
+				if (!(this.entities[i].ai === null)) {
+					//console.log("has ai");
+					this.entities[i].think();
+				}
+			}
+		}
+	}
 }
     
 class Tile { 
@@ -168,8 +199,21 @@ class Item extends Entity {
 class Actor extends Entity {
 	constructor(config) {
 		super(config);
+		if ("ai" in config) {
+			this.ai = config["ai"];
+		} else {
+			this.ai = null;
+		}
 		this.entity_type = "actor";
 		this.inventory = [];
+	}
+	
+	think() {
+		if (typeof this.ai === "function") {
+			this.ai();
+		} else {
+			console.log("Actor " + this.name + " has ai defined but is not callable.");
+		}
 	}
 	
 	addToInventory(item) {
@@ -249,6 +293,7 @@ class Player extends Actor {
 		if (didAction) {
 			Game.drawMap()
 			window.removeEventListener("keydown", this);
+			Game.actorTurn();
 			Game.engine.unlock();
 		}
 	}
