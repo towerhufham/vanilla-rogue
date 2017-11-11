@@ -1,4 +1,4 @@
-function createArray(length) { //this function by Matthew Crumley
+function createArray(length) { //this function is by Matthew Crumley
     var arr = new Array(length || 0),
         i = length;
     if (arguments.length > 1) {
@@ -177,6 +177,19 @@ class Actor extends Entity {
 		this.inventory.push(item);
 	}
 	
+	move(dx, dy) {
+		var newX = this.x + dx;
+		var newY = this.y + dy;
+		
+		//quit if there is no tile
+		if (!(Game.map[newX][newY])) {return;}
+		//quit if the tile is impassable
+		if (Game.map[newX][newY].passable) {return;}
+		
+		this.x = newX;
+		this.y = newY;
+	}
+	
 	pickUp() {
 		var entitiesHere = Game.getEntitiesAt(this.x, this.y);
 		for (var i = 0; i < entitiesHere.length; i++) {
@@ -223,17 +236,10 @@ class Player extends Actor {
 		var didAction = false;
 		
 		if (key in movement) {
-			var newX = this.x + movement[key].x;
-			var newY = this.y + movement[key].y;
-			
-			//quit if there is no tile
-			if (!(Game.map[newX][newY])) {return;}
-			//quit if the tile is impassable
-			if (Game.map[newX][newY].passable) {return;}
-			
-			didAction = true
-			this.x = newX;
-			this.y = newY;
+			var dx = movement[key].x;
+			var dy = movement[key].y;
+			this.move(dx, dy);
+			didAction = true;
 		}
 		else if (key === "Comma") {
 			this.pickUp();
